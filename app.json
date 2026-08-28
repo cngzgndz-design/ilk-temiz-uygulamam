@@ -31,7 +31,14 @@
           "iosAppId": "ca-app-pub-8577494064582289~8019317128"
         }
       ],
-      "expo-build-properties"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.3.0"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
