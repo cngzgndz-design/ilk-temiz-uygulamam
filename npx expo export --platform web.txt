@@ -1,0 +1,5 @@
+npx expo start --web
+
+npx expo export --platform web
+
+komut : en son stabil koda dön 
