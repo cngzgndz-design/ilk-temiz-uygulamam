@@ -23,6 +23,15 @@
     "web": {
       "favicon": "./assets/logo.png"
     },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8577494064582289~8019317128",
+          "iosAppId": "ca-app-pub-8577494064582289~8019317128"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "10d84474-0e4b-4d04-8429-433a522efeaf"
