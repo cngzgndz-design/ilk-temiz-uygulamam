@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Modal, Linking, Platform, Image } from 'react-native';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, getDocs, getDoc } from 'firebase/firestore';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDyGdTUpsPc8C60cgt3kNWs3kFCY_6x9J0",
@@ -15,6 +16,9 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+
+// Geliştirme aşamasında test reklamı, canlıda gerçek banner ID'si görünür
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-8577494064582289/4504789547';
 
 function OrduMumessilleriLogosu() {
   return (
@@ -58,7 +62,7 @@ const IKON_YOLLARI = {
   instagram: "M12 2.1c3.2 0 3.6 0 4.9.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.9s0 3.6-.1 4.9c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.9.1s-3.6 0-4.9-.1c-3.2-.1-4.8-1.7-4.9-4.9-.1-1.3-.1-1.6-.1-4.9s0-3.6.1-4.9c.1-3.2 1.7-4.8 4.9-4.9 1.3-.1 1.6-.1 4.9-.1M12 0C8.7 0 8.3 0 7 1 .3 1.3 0 3.6 0 7c0 1.3 0 1.7.1 3s0 3.6.1 4.9c.3 3.4 2.2 5.3 5.6 5.6 1.3.1 1.7.1 3 .1s3.6 0 4.9-.1c3.4-.3 5.3-2.2 5.6-5.6.1-1.3.1-1.7.1-3s0-3.6-.1-4.9c-.3-3.4-2.2-5.3-5.6-5.6C15.7 0 15.3 0 12 0zm0 5.8c-3.4 0-6.2 2.8-6.2 6.2s2.8 6.2 6.2 6.2 6.2-2.8 6.2-6.2-2.8-6.2-6.2-6.2zm0 10.2c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4zm6.4-11.8c-.8 0-1.4.6-1.4 1.4s.6 1.4 1.4 1.4 1.4-.6 1.4-1.4-.6-1.4-1.4-1.4z",
   youtube: "M23.5 6.2c-.3-1.1-1.1-2-2.2-2.3C19.3 3.5 12 3.5 12 3.5s-7.3 0-9.3.4c-1.1.3-1.9 1.2-2.2 2.3C0 8.2 0 12 0 12s0 3.8.4 5.8c.3 1.1 1.1 2 2.2 2.3 2 .4 9.3.4 9.3.4s7.3 0 9.3-.4c1.1-.3 1.9-1.2 2.2-2.3.4-2 .4-5.8.4-5.8s0-3.8-.4-5.8zM9.5 15.5V8.5l6.5 3.5-6.5 3.5z",
   linkedin: "M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.26c-.96 0-1.74-.78-1.74-1.74s.78-1.74 1.74-1.74 1.74.78 1.74 1.74-.78 1.74-1.74 1.74zm12.5 12.26h-3v-5.59c0-1.33-.03-3.05-1.86-3.05-1.86 0-2.15 1.45-2.15 2.95v5.69h-3v-11h2.88v1.5h.04c.4-.76 1.38-1.56 2.84-1.56 3.04 0 3.6 2 3.6 4.61v6.45z",
-  whatsapp: "M12.004 2C6.48 2 2 6.48 2 12.004c0 1.765.458 3.424 1.258 4.874L2 22l5.25-.132A9.957 9.957 0 0012.004 22c5.523 0 10-4.48 10-10s-4.477-10-10-10zm3.626 14.18c-.198.56-.99 1.092-1.55 1.15-.38.04-1.35.215-3.08-.501-2.213-.914-3.64-3.175-3.75-3.323-.11-.148-.895-1.192-.895-2.274 0-1.082.565-1.614.767-1.828.2-.214.54-.316.76-.316h.5c.16 0 .37 0 .54.403.185.438.636 1.545.69 1.66.056.115.093.248.016.4-.076.15-.113.249-.23.383-.116.134-.247.3-.353.402-.12.115-.246.241-.106.484.14.243.625 1.031 1.34 1.667.92.819 1.696 1.072 1.936 1.192.24.12.38.103.522-.06.14-.165.602-.702.763-.94.161-.24.32-.198.54-.115.22.082 1.404.661 1.644.78.24.12.4.181.46.28.06.1.06.578-.138 1.138z",
+  whatsapp: "M12.004 2C6.48 2 2 6.48 2 12.004c0 1.765.458 3.424 1.258 4.874L2 22l5.25-.132A9.957 9.957 0 0012.004 22c5.523 0 10-4.48 10-10-4.477-10-10-10zm3.626 14.18c-.198.56-.99 1.092-1.55 1.15-.38.04-1.35.215-3.08-.501-2.213-.914-3.64-3.175-3.75-3.323-.11-.148-.895-1.192-.895-2.274 0-1.082.565-1.614.767-1.828.2-.214.54-.316.76-.316h.5c.16 0 .37 0 .54.403.185.438.636 1.545.69 1.66.056.115.093.248.016.4-.076.15-.113.249-.23.383-.116.134-.247.3-.353.402-.12.115-.246.241-.106.484.14.243.625 1.031 1.34 1.667.92.819 1.696 1.072 1.936 1.192.24.12.38.103.522-.06.14-.165.602-.702.763-.94.161-.24.32-.198.54-.115.22.082 1.404.661 1.644.78.24.12.4.181.46.28.06.1.06.578-.138 1.138z",
   adres: "M12 2C7.6 2 4 5.6 4 10c0 5.2 7 12 8 12s8-6.8 8-12c0-4.4-3.6-10-10-10zm0 11c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"
 };
 
@@ -72,7 +76,6 @@ export default function App() {
   const fileInputRef = useRef(null);
   const yardimciFotoRefs = useRef([]);
 
-  // Oturum Kalıcılığı: Sayfa açıldığında daha önceden giriş yapıldıysa hatırla
   const [adminGirisYaptiMi, setAdminGirisYaptiMi] = useState(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       return localStorage.getItem('ordu_admin_giris') === 'true';
@@ -87,7 +90,7 @@ export default function App() {
       const sifreRef = doc(db, "ayarlar", "guvenlik");
       const docSnap = await getDoc(sifreRef);
       
-      let veritabanindakiSifre = "nemesis123"; // Varsayılan şifre
+      let veritabanindakiSifre = "nemesis123";
       if (docSnap.exists() && docSnap.data().adminSifre) {
         veritabanindakiSifre = docSnap.data().adminSifre;
       }
@@ -888,6 +891,18 @@ export default function App() {
               ) : null)}
             </View>
           </View>
+
+          {/* Banner Reklam Alanı */}
+          <View style={{ alignItems: 'center', marginVertical: 15 }}>
+            <BannerAd
+              unitId={adUnitId}
+              size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+              requestOptions={{
+                requestNonPersonalizedAdsOnly: true,
+              }}
+            />
+          </View>
+
           <Text style={styles.copyrightMetni}>© CG</Text>
         </View>
       )}
