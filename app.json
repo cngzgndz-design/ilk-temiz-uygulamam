@@ -23,7 +23,7 @@
     "web": {
       "favicon": "./assets/logo.png"
     },
-    "plugins": [
+  "plugins": [
       [
         "react-native-google-mobile-ads",
         {
