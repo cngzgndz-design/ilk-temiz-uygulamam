@@ -2,7 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Modal, Linking, Platform, Image } from 'react-native';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, getDocs, getDoc } from 'firebase/firestore';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+
+// Web ortamında mobil reklam modülünün çökmesini önleyen güvenli yükleme
+let BannerAd = null;
+let BannerAdSize = null;
+let TestIds = null;
+
+if (Platform.OS !== 'web') {
+  try {
+    const ads = require('react-native-google-mobile-ads');
+    BannerAd = ads.BannerAd;
+    BannerAdSize = ads.BannerAdSize;
+    TestIds = ads.TestIds;
+  } catch (e) {
+    console.log("Reklam modülü yüklenemedi:", e);
+  }
+}
+
+const adUnitId = (__DEV__ && TestIds) ? TestIds.BANNER : 'ca-app-pub-8577494064582289/4504789547';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDyGdTUpsPc8C60cgt3kNWs3kFCY_6x9J0",
@@ -17,26 +34,13 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
-// Geliştirme aşamasında test reklamı, canlıda gerçek banner ID'si görünür
-const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-8577494064582289/4504789547';
-
 function OrduMumessilleriLogosu() {
   return (
     <View style={logoStyles.logoMerkezKonteyner}>
-      {Platform.OS === 'web' ? (
-        <svg width="110" height="110" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 12 }}>
-          <path d="M50 12C45.5 12 41.2 13.8 38 17C42 21 48 23 50 23C52 23 58 21 62 17C58.8 13.8 54.5 12 50 12Z" fill="#00205B" />
-          <path d="M50 26C41 26 31 32 27 41C32 44 45 42 50 33C55 42 68 44 73 41C69 32 59 26 50 26Z" fill="#00205B" />
-          <path d="M22 64C19.5 60 18 55.2 18 50C18 44.8 19.5 40 22 36C21.5 41 23 48 26 51C29 54 35 58 38 59C33 54 28 44 28 39C23 41 14 51 16 61C17.5 62.5 19.5 63.5 22 64Z" fill="#007A87" />
-          <path d="M78 36C80.5 40 82 44.8 82 50C82 55.2 80.5 60 78 64C80.5 63.5 82.5 62.5 84 61C86 51 77 41 72 39C72 44 67 54 62 59C65 58 71 54 74 51C77 48 78.5 41 78 36Z" fill="#4B9B28" />
-          <path d="M30 69C36 76 44 79 50 79C56 79 64 76 70 69C63 67 55 70 50 74C45 70 37 67 30 69Z" fill="#007A87" />
-          <circle cx="50" cy="20" r="5" fill="#00205B" />
-          <circle cx="21" cy="50" r="5" fill="#007A87" />
-          <circle cx="79" cy="50" r="5" fill="#4B9B28" />
-        </svg>
-      ) : (
-        <Text style={{ fontSize: 44, marginBottom: 10 }}>👥</Text>
-      )}
+      <Image 
+        source={require('./assets/logo.png')} 
+        style={{ width: 100, height: 100, resizeMode: 'contain', marginBottom: 10 }} 
+      />
       <View style={logoStyles.logoMetinAlani}>
         <Text style={logoStyles.logoAnaYazi}>ORDU</Text>
         <Text style={logoStyles.logoAltYazi}>MÜMESSİLLERİ</Text>
@@ -76,12 +80,8 @@ export default function App() {
   const fileInputRef = useRef(null);
   const yardimciFotoRefs = useRef([]);
 
-  const [adminGirisYaptiMi, setAdminGirisYaptiMi] = useState(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      return localStorage.getItem('ordu_admin_giris') === 'true';
-    }
-    return false;
-  });
+  // Yönetici girişi varsayılan olarak kapalı (Şifre zorunlu)
+  const [adminGirisYaptiMi, setAdminGirisYaptiMi] = useState(false);
 
   const [girilenSifre, setGirilenSifre] = useState('');
   
@@ -98,9 +98,6 @@ export default function App() {
       if (girilenSifre === veritabanindakiSifre) {
         setAdminGirisYaptiMi(true);
         setGirilenSifre('');
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          localStorage.setItem('ordu_admin_giris', 'true');
-        }
       } else {
         alert("Hatalı şifre!");
       }
@@ -250,7 +247,7 @@ export default function App() {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_SIZE = 800;
+          const MAX_SIZE = 1200;
           if (width > MAX_SIZE || height > MAX_SIZE) {
             if (width > height) {
               height *= MAX_SIZE / width;
@@ -264,7 +261,7 @@ export default function App() {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
           setYuklenenDosyaData(compressedDataUrl);
         };
       } else {
@@ -325,9 +322,6 @@ export default function App() {
   function adminCikisYap() {
     setAdminGirisYaptiMi(false);
     setYanMenuAcikMi(false);
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      localStorage.removeItem('ordu_admin_giris');
-    }
     formuTemizle();
   }
 
@@ -345,7 +339,18 @@ export default function App() {
     if (!dosyaData) return;
     const yeniSekme = window.open();
     if (yeniSekme) {
-      yeniSekme.document.write(`<iframe src="${dosyaData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+      if (dosyaData.startsWith('data:image/')) {
+        yeniSekme.document.write(`
+          <html>
+            <head><title>${dosyaAdi || "Anlaşma Belgesi"}</title></head>
+            <body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;">
+              <img src="${dosyaData}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+            </body>
+          </html>
+        `);
+      } else {
+        yeniSekme.document.write(`<iframe src="${dosyaData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+      }
       yeniSekme.document.title = dosyaAdi || "Anlaşma Belgesi";
     }
   }
@@ -694,7 +699,7 @@ export default function App() {
       
       {Platform.OS === 'web' && (
         <View style={{ position: 'absolute', width: 0, height: 0, opacity: 0, overflow: 'hidden' }}>
-          <input type="file" ref={fileInputRef} onChange={dosyayiSistemeYukle} id="globalA4Input" />
+          <input type="file" ref={fileInputRef} onChange={dosyayiSistemeYukle} id="globalA4Input" accept="image/*,application/pdf" />
           {formYonetimListesi.map((_, i) => (
             <input key={i} type="file" id={`dinamikKadroInput-${i}`} ref={el => yardimciFotoRefs.current[i] = el} onChange={(e) => dinamikKadroFotoYukle(e, i)} accept="image/*" />
           ))}
@@ -892,16 +897,18 @@ export default function App() {
             </View>
           </View>
 
-          {/* Banner Reklam Alanı */}
-          <View style={{ alignItems: 'center', marginVertical: 15 }}>
-            <BannerAd
-              unitId={adUnitId}
-              size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-              requestOptions={{
-                requestNonPersonalizedAdsOnly: true,
-              }}
-            />
-          </View>
+          {/* Banner Reklam Alanı (Web'de gizli, Mobilde aktif) */}
+          {Platform.OS !== 'web' && BannerAd && (
+            <View style={{ alignItems: 'center', marginVertical: 15 }}>
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
+            </View>
+          )}
 
           <Text style={styles.copyrightMetni}>© CG</Text>
         </View>
@@ -1329,7 +1336,7 @@ const styles = StyleSheet.create({
   cikisButon: { backgroundColor: '#FF3B30', padding: 10, borderRadius: 8 },
   cikisButonYazi: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
   manuelLimitSatiri: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 10, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#cbd5e1' },
-  manuelLimitInputKutusu: { backgroundColor: '#EBF0F5', color: '#4B9B28', width: 50, height: 32, borderRadius: 6, borderWidth: 1, borderColor: '#cbd5e1', textAlign: 'center', fontWeight: 'bold', fontSize: 14 },
+  manuelLimitInputKutusu: { backgroundColor: '#EBF0F5', color: '#4B9B28', width: 70, height: 36, borderRadius: 6, borderWidth: 1, borderColor: '#cbd5e1', textAlign: 'center', fontWeight: 'bold', fontSize: 15 },
   sayfalamaNavigasyonSatiri: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#e2e8f0' },
   sayfaGezmeButon: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#cbd5e1', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6, minWidth: 70, alignItems: 'center' },
   sayfaGezmeYazi: { color: '#333', fontSize: 12, fontWeight: 'bold' },
